@@ -212,18 +212,20 @@ struct ScanningOverlay: View {
             .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isAnimating)
 
             // Scanning line
-            VStack {
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.clear, .blue.opacity(0.5), .clear],
-                            startPoint: .leading,
-                            endPoint: .trailing
+            GeometryReader { scanGeo in
+                VStack {
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.clear, .blue.opacity(0.5), .clear],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
-                    )
-                    .frame(height: 2)
-                    .offset(y: isAnimating ? 200 : -200)
-                    .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: isAnimating)
+                        .frame(height: 2)
+                        .offset(y: isAnimating ? scanGeo.size.height * 0.3 : -scanGeo.size.height * 0.3)
+                        .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: isAnimating)
+                }
             }
             .clipped()
             .padding(40)

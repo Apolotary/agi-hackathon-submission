@@ -169,10 +169,12 @@ struct ArtifactWebView: UIViewRepresentable {
         }
         html, body {
             margin: 0; padding: 0;
+            padding-top: 44px !important;
             background: transparent !important;
             background-color: transparent !important;
             width: 100%;
             min-height: 100%;
+            box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 16px;
             color: #fff;

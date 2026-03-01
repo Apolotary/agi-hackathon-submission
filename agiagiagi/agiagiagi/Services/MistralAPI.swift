@@ -1055,7 +1055,7 @@ class MistralAPI: ObservableObject {
         Content approach — EACH format must look VISUALLY DISTINCT. Use the layout structure described. NEVER fall back to the same card-with-stat-bars layout for everything:
 
         FORMAT 1 — "Card/collect/mint" → COLLECTIBLE CARD:
-          Rarity badge top-left, type badge top-right. Giant emoji center (font-size:48px+). Object name as h2. One-line description. 3-4 gradient stat bars. Italic flavor text with left border. 1-2 explore buttons.
+          Category badge top-left, rarity badge BELOW category badge (not top-right!). Giant emoji center (font-size:48px+). Object name as h2. One-line description. 3-4 gradient stat bars. Italic flavor text with left border. 1-2 explore buttons.
 
         FORMAT 2 — "Talk to/dialogue/interview/interrogate" → DIALOGUE TREE:
           Opening scene paragraph (italic). Then "[INNER VOICE]:" label in color. Material read (what it IS). Psychological read (what it MEANS). Then 2-3 dialogue buttons that reveal hidden response divs. Branch 2-3 levels deep. Use the interactive button pattern.
@@ -1138,7 +1138,7 @@ class MistralAPI: ObservableObject {
         - Glass card style: rgba(255,255,255,0.1), backdrop-filter:blur(20px), border:1px solid rgba(255,255,255,0.15), border-radius:16px
         - White text on transparent dark. Accent colors for highlights.
         - NEVER create black/dark empty placeholder divs. Use emoji (font-size:36px+) for visual icons instead.
-        - Leave ~60px clear at the top-right for native share/close buttons. Don't put badges there.
+        - CRITICAL: The top-right corner (top 50px, right 120px) is RESERVED for native iOS buttons. NEVER place badges, labels, or any elements there. Put all badges/labels on the LEFT side or below the top area. Rarity badges go top-left or below the category label, NEVER top-right.
         - Respond in \(userLanguage)
         \(paceRule)
         \(styleRule)

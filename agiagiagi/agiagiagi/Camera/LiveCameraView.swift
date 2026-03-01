@@ -234,17 +234,19 @@ struct LiveCameraView: View {
                     }
                 }
 
-            // Layer 2: Bottom gradient scrim
-            VStack {
-                Spacer()
-                LinearGradient(
-                    colors: showArtifact
-                        ? [.clear, .black.opacity(0.3), .black.opacity(0.5)]
-                        : [.clear, .black.opacity(0.5), .black.opacity(0.8)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: showArtifact ? 800 : 360)
+            // Layer 2: Bottom gradient scrim (adaptive to screen height)
+            GeometryReader { scrimProxy in
+                VStack {
+                    Spacer()
+                    LinearGradient(
+                        colors: showArtifact
+                            ? [.clear, .black.opacity(0.3), .black.opacity(0.5)]
+                            : [.clear, .black.opacity(0.5), .black.opacity(0.8)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: showArtifact ? scrimProxy.size.height : scrimProxy.size.height * 0.45)
+                }
             }
             .ignoresSafeArea()
             .allowsHitTesting(false)
@@ -280,7 +282,8 @@ struct LiveCameraView: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.white.opacity(0.5))
-                        .padding(.bottom, 60)
+                        .padding(.bottom, 80)
+                        .safeAreaPadding(.bottom)
                 }
             }
 
@@ -698,7 +701,7 @@ struct LiveCameraView: View {
                         lineWidth: msg.innerVoice != nil ? 1.5 : 1
                     )
             )
-            .frame(maxWidth: 300, alignment: .leading)
+            .frame(maxWidth: UIScreen.main.bounds.width * 0.75, alignment: .leading)
             .contextMenu {
                 Button {
                     withAnimation {
@@ -732,7 +735,7 @@ struct LiveCameraView: View {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(.white.opacity(0.18))
                     )
-                    .frame(maxWidth: 260, alignment: .trailing)
+                    .frame(maxWidth: UIScreen.main.bounds.width * 0.65, alignment: .trailing)
             }
 
         case .system:
@@ -937,7 +940,7 @@ struct LiveCameraView: View {
 
     private func artifactOverlay(html: String) -> some View {
         GeometryReader { proxy in
-            let maxCardWidth = min(390.0, proxy.size.width - 24.0)
+            let maxCardWidth = proxy.size.width - 24.0
             let maxCardHeight = min(
                 proxy.size.height * 0.74,
                 proxy.size.height - proxy.safeAreaInsets.top - proxy.safeAreaInsets.bottom - 120.0
@@ -958,26 +961,26 @@ struct LiveCameraView: View {
                     .stroke(vibeGlowColor.opacity(0.4), lineWidth: 1.5)
             )
             .overlay(alignment: .topTrailing) {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     // Save as skill button
                     Button {
                         saveArtifactAsSkill(html: html, goal: artifactGoal)
                     } label: {
                         Image(systemName: isSkillSaved(goal: artifactGoal) ? "bookmark.fill" : "bookmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(isSkillSaved(goal: artifactGoal) ? .yellow : .white.opacity(0.92))
-                            .shadow(radius: 4)
+                            .font(.title3)
+                            .foregroundStyle(isSkillSaved(goal: artifactGoal) ? .yellow : .white)
                     }
+                    .frame(width: 32, height: 32)
 
                     // Share button
                     Button {
                         shareArtifact(html: html, goal: artifactGoal)
                     } label: {
                         Image(systemName: "square.and.arrow.up.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.white.opacity(0.92))
-                            .shadow(radius: 4)
+                            .font(.title3)
+                            .foregroundStyle(.white)
                     }
+                    .frame(width: 32, height: 32)
 
                     // Close button
                     Button {
@@ -991,12 +994,15 @@ struct LiveCameraView: View {
                         }
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.white.opacity(0.92))
-                            .shadow(radius: 4)
+                            .font(.title3)
+                            .foregroundStyle(.white)
                     }
+                    .frame(width: 32, height: 32)
                 }
-                .padding(10)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: Capsule())
+                .padding(8)
             }
             .shadow(color: vibeGlowColor.opacity(0.2), radius: 20, x: 0, y: 0)
             .shadow(color: .black.opacity(0.28), radius: 18, x: 0, y: 10)
