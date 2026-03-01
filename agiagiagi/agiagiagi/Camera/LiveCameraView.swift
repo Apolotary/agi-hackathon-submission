@@ -2491,8 +2491,13 @@ struct LiveCameraView: View {
             ZStack {
                 ForEach(crowdNotes.filter { !$0.hidden }) { note in
                     let x = note.bbox.centerX * proxy.size.width
-                    // Place label just above the bbox center
-                    let y = max(40, note.bbox.y * proxy.size.height - 8)
+                    // Place label just above the bbox center, clamped to safe zone
+                    // Top: below status bar + top controls (~60pt)
+                    // Bottom: above chat bubbles + chips + input + tab bar (~280pt from bottom)
+                    let topSafe: CGFloat = 60
+                    let bottomSafe = proxy.size.height * 0.58
+                    let rawY = note.bbox.y * proxy.size.height - 8
+                    let y = min(max(topSafe, rawY), bottomSafe)
 
                     Button {
                         injectObjectIntoConversation(note)
