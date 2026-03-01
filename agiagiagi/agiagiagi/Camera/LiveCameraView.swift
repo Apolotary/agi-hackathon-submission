@@ -2488,16 +2488,17 @@ struct LiveCameraView: View {
     /// Tapping one injects it into the conversation.
     /// Resolve label positions so they don't overlap each other or UI controls.
     private func resolvedLabelPositions(notes: [CrowdNote], in size: CGSize) -> [(id: UUID, x: CGFloat, y: CGFloat)] {
-        let topSafe: CGFloat = 70
-        let bottomSafe = size.height * 0.48
-        let labelHeight: CGFloat = 24
-        let labelMinSpacing: CGFloat = 4
-        let slotHeight = labelHeight + labelMinSpacing
+        // Safe zone: below top controls, above chat area
+        let topSafe: CGFloat = 90
+        let bottomSafe = size.height * 0.45
+        let labelWidth: CGFloat = 140
+        let labelHeight: CGFloat = 26
+        let spacing: CGFloat = 6
 
         // Build initial positions
         var positions: [(id: UUID, x: CGFloat, y: CGFloat)] = notes.map { note in
             let rawX = note.bbox.centerX * size.width
-            let x = min(max(60, rawX), size.width - 60)
+            let x = min(max(70, rawX), size.width - 70)
             let rawY = note.bbox.y * size.height - 8
             let y = min(max(topSafe, rawY), bottomSafe)
             return (id: note.id, x: x, y: y)
@@ -2506,15 +2507,26 @@ struct LiveCameraView: View {
         // Sort by Y so we process top-to-bottom
         positions.sort { $0.y < $1.y }
 
-        // Push overlapping labels apart vertically
+        // Greedy collision resolution: check each label against ALL previous
         for i in 1..<positions.count {
-            let prev = positions[i - 1]
-            let curr = positions[i]
-            // Check if labels are close enough horizontally to potentially overlap
-            let horizontalOverlap = abs(curr.x - prev.x) < 120
-            if horizontalOverlap && (curr.y - prev.y) < slotHeight {
-                positions[i].y = min(prev.y + slotHeight, bottomSafe)
+            var attempts = 0
+            while attempts < 5 {
+                var hasOverlap = false
+                for j in 0..<i {
+                    let dx = abs(positions[i].x - positions[j].x)
+                    let dy = abs(positions[i].y - positions[j].y)
+                    if dx < labelWidth && dy < (labelHeight + spacing) {
+                        // Push down below the conflicting label
+                        positions[i].y = positions[j].y + labelHeight + spacing
+                        hasOverlap = true
+                        break
+                    }
+                }
+                if !hasOverlap { break }
+                attempts += 1
             }
+            // Clamp to safe zone
+            positions[i].y = min(positions[i].y, bottomSafe)
         }
 
         return positions
