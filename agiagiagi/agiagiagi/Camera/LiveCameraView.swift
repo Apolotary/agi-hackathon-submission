@@ -956,10 +956,6 @@ struct LiveCameraView: View {
             }
             .frame(width: maxCardWidth, height: maxCardHeight)
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(vibeGlowColor.opacity(0.4), lineWidth: 1.5)
-            )
             .overlay(alignment: .topTrailing) {
                 HStack(spacing: 6) {
                     // Save as skill button
