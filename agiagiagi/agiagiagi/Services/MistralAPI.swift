@@ -1164,7 +1164,7 @@ class MistralAPI: ObservableObject {
         - Glass card style: rgba(255,255,255,0.1), backdrop-filter:blur(20px), border:1px solid rgba(255,255,255,0.15), border-radius:16px
         - White text on transparent dark. Accent colors for highlights.
         - NEVER create black/dark empty placeholder divs. Use emoji (font-size:36px+) for visual icons instead.
-        - CRITICAL: The top-right corner (top 50px, right 120px) is RESERVED for native iOS buttons. NEVER place badges, labels, or any elements there. Put all badges/labels on the LEFT side or below the top area. Rarity badges go top-left or below the category label, NEVER top-right.
+        - CRITICAL LAYOUT: The top 60px of the card is RESERVED for native iOS overlay buttons. NEVER place stat bars, progress bars, badges, or any visual content in the top-right area. Start all visible content (stat bars, charts, labels) AFTER the title. Put badges/rarity labels on the LEFT side only, NEVER top-right. The first element should be a centered emoji or title, not bars or badges.
         - Respond in \(userLanguage)
         \(paceRule)
         \(styleRule)

@@ -263,7 +263,8 @@ struct LiveCameraView: View {
             }
 
             // Layer 4a: World object labels in companion mode (tappable → feeds into conversation)
-            if !crowdNotesMode && !showArtifact && !crowdNotes.isEmpty && runtimeState != .paused {
+            // Hide when chat messages are visible to avoid overlap
+            if !crowdNotesMode && !showArtifact && !crowdNotes.isEmpty && runtimeState != .paused && messages.isEmpty {
                 worldObjectLabels
             }
 

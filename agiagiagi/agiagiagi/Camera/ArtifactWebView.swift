@@ -169,7 +169,7 @@ struct ArtifactWebView: UIViewRepresentable {
         }
         html, body {
             margin: 0; padding: 0;
-            padding-top: 44px !important;
+            padding-top: 52px !important;
             background: transparent !important;
             background-color: transparent !important;
             width: 100%;
