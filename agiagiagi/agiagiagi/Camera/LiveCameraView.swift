@@ -1176,7 +1176,8 @@ struct LiveCameraView: View {
                     imageData: snapshot.data,
                     conversationHistory: Array(conversationHistory.suffix(maxHistoryForAPI)),
                     userProfile: profile,
-                    mode: companionMode
+                    mode: companionMode,
+                    recentArtifactFormats: sceneSession.recentArtifactFormats
                 )
 
                 let traceDuration = Int(Date().timeIntervalSince(traceStart) * 1000)
@@ -1539,6 +1540,7 @@ struct LiveCameraView: View {
             sceneSession.currentGoal = goal
             sceneSession.recordGoalAttempt(goal)
             sceneSession.artifactsGenerated += 1
+            sceneSession.recordArtifactFormat(goal)
 
             let artifactTraceStart = Date()
             AgentTraceCollector.shared.log(agent: "Artifact", model: "mistral-small", action: "generateArtifact", status: .started, detail: goal.prefix(40).description)

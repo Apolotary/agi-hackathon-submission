@@ -602,7 +602,8 @@ class MistralAPI: ObservableObject {
         imageData: Data,
         conversationHistory: [ChatMessage],
         userProfile: UserProfile? = nil,
-        mode: CompanionMode = .literary
+        mode: CompanionMode = .literary,
+        recentArtifactFormats: [String] = []
     ) async throws -> CompanionObservation {
         print("[MistralAPI] companionObserve: starting, mode=\(mode.rawValue)")
 
@@ -711,6 +712,7 @@ class MistralAPI: ObservableObject {
                - VS BATTLES: "Battle: this vs that", "Head-to-head matchup" — dramatic side-by-side comparison with winner
                - SIMULATIONS: "Simulate the physics", "Demo this mechanism" — mini interactive demo with CSS animations
                - POEMS: "Write a haiku about this", "Compose an ode" — formatted literary piece inspired by the object
+               \(recentArtifactFormats.isEmpty ? "" : "VARIETY RULE: The user has ALREADY generated these artifact formats this session: [\(recentArtifactFormats.joined(separator: ", "))]. Do NOT suggest these same formats again. Pick from the categories they HAVEN'T tried yet. The goal is to show the full range of what I can build.")
                Name the ACTUAL object you see. Reference SPECIFIC details. Make each chip feel like a unique action only possible for THIS scene.
                If you see text in a non-English language, include a translation chip.
             5. Rate quality_confidence (0.0-1.0): how well you understand this scene.
@@ -1050,42 +1052,63 @@ class MistralAPI: ObservableObject {
         - Keep html under 3200 characters
         - Keep copy concise but evocative
 
-        Content approach — pick the best format for the goal. EVERY artifact should feel unique, collectible, and worth sharing:
-        - "Card/collect/mint" → COLLECTIBLE CARD. Follow this EXACT structure (fill in the content):
-          <div style="padding:20px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <span style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(100,200,255,0.2);border:1px solid rgba(100,200,255,0.4)">[TYPE]</span>
-              <span style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.4)">[RARITY: Common/Rare/Legendary]</span>
-            </div>
-            <div style="font-size:36px;text-align:center;padding:16px 0">[BIG EMOJI representing the object]</div>
-            <h2 style="margin:8px 0 4px">[Object Name]</h2>
-            <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0 0 14px">[One-line description]</p>
-            [3-4 stat bars, each: <div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span>[Stat Name]</span><span>[Value]%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.1)"><div style="height:100%;border-radius:3px;width:[Value]%;background:linear-gradient(90deg,[color1],[color2])"></div></div></div>]
-            <p style="font-style:italic;font-size:13px;color:rgba(255,255,255,0.6);margin:14px 0;border-left:2px solid rgba(255,255,255,0.2);padding-left:10px">"[Flavor text quote]"</p>
-            [1-2 buttons for deeper exploration]
-          </div>
-          Use a LARGE EMOJI (💻⌨️🎧☕🧸🔌📱🖥️🪴🎮 etc.) as the card visual — NEVER a black/empty div.
-        - "Talk to/dialogue/conversation/interview/interrogate" → INNER-VOICE DIALOGUE. Use dual-register:
-          1. MATERIAL READ: one concrete physical observation.
-          2. PSYCHOLOGICAL READ: one inner voice with opinion or symbolic meaning.
-          Then present 2-3 dialogue option BUTTONS. NEVER reference buttons/keys that don't exist in your HTML.
-        - "Narrate/story/lore/autobiography/history" → Literary narrative card. Evocative, opinionated.
-        - "Specs/identify/model/ID" → Spec sheet or identification card.
-        - "Chart/compare/rate/map/score" → Visual table, rating bars, scored breakdown, or CSS-drawn diagram. Use pure CSS shapes (divs with border-radius, background-color, position:absolute) for visuals. NEVER use placeholder text.
-        - "Guide/how-to/explain" → Step-by-step visual guide with numbered steps, icons, and progress indicators.
-        - "Translate/read" → Translation card with original + translated text.
-        - "Bestiary/log/entry" → RPG encyclopedia entry with type, habitat, traits, lore.
-        - "Quiz/test/trivia/flashcard" → Interactive quiz or flashcard about the object. Show question, tap to reveal answer, track score with a counter.
-        - "Timeline/history/evolution" → Visual timeline with CSS-drawn vertical line, dots, and dated entries showing the object's history or evolution.
-        - "Recipe/ingredients/how it's made" → Ingredient list or recipe card with proportions, steps, and visual layout.
-        - "Mood/vibe/aesthetic/palette" → Color palette extraction or mood board. Show CSS color swatches, mood descriptors, and aesthetic analysis.
-        - "Rank/tier/tier list" → Tier list or ranking card with S/A/B/C/D tiers, placed items, and explanations.
-        - "Simulate/physics/demo" → Mini interactive simulation or demo. CSS animations, click-driven state changes, simple physics or counters.
-        - "Poem/haiku/creative writing" → Formatted literary piece inspired by the object. Beautiful typography, decorative borders, author attribution.
-        - "Roast/review/critique/rate" → Honest review card with star ratings, pros/cons, a verdict, and a witty one-liner.
-        - "Blueprint/diagram/schematic" → Technical diagram using CSS grid/flexbox. Component labels, connection lines (borders), measurements.
-        - "Match/versus/battle" → VS comparison card: two things side-by-side with stat bars, winner declaration, and dramatic formatting.
-        - Anything else → Surprise the user. Make something beautiful they haven't seen before.
+        Content approach — EACH format must look VISUALLY DISTINCT. Use the layout structure described. NEVER fall back to the same card-with-stat-bars layout for everything:
+
+        FORMAT 1 — "Card/collect/mint" → COLLECTIBLE CARD:
+          Rarity badge top-left, type badge top-right. Giant emoji center (font-size:48px+). Object name as h2. One-line description. 3-4 gradient stat bars. Italic flavor text with left border. 1-2 explore buttons.
+
+        FORMAT 2 — "Talk to/dialogue/interview/interrogate" → DIALOGUE TREE:
+          Opening scene paragraph (italic). Then "[INNER VOICE]:" label in color. Material read (what it IS). Psychological read (what it MEANS). Then 2-3 dialogue buttons that reveal hidden response divs. Branch 2-3 levels deep. Use the interactive button pattern.
+
+        FORMAT 3 — "Narrate/story/lore/autobiography" → LITERARY SCROLL:
+          Large opening emoji. Drop cap first letter (font-size:32px, float:left). 2-3 paragraphs of evocative prose. Pull quote in large italic with colored left border. Closing line in small muted text. NO stat bars. NO buttons. Just beautiful reading.
+
+        FORMAT 4 — "Specs/identify/model/ID" → SPEC SHEET:
+          Header with emoji + "IDENTIFICATION REPORT". Key-value pairs in a 2-column grid (label left in muted, value right in bold). Horizontal divider. "Verdict" section with colored background. Clean, technical, no prose.
+
+        FORMAT 5 — "Chart/compare/rate/score" → SCORED BREAKDOWN:
+          Title + overall score in large text (e.g. "7.4/10"). Individual category rows with label, score number, and colored bar (width = score%). Pros list (green bullets). Cons list (red bullets). One-line verdict in bold.
+
+        FORMAT 6 — "Guide/how-to/explain" → STEP GUIDE:
+          Numbered steps with large circled numbers (width:32px;height:32px;border-radius:50%;background:accent;text-align:center;line-height:32px). Each step has a bold instruction + muted detail line. Progress dots at bottom. Totally different from cards.
+
+        FORMAT 7 — "Translate/read" → TRANSLATION SPLIT:
+          Original text in a dark-background block with monospace font. Arrow or divider. Translated text below in a lighter block. Language labels as small badges. Notes on nuance in italic.
+
+        FORMAT 8 — "Bestiary/log/entry" → RPG ENCYCLOPEDIA:
+          "BESTIARY ENTRY #[random 3-digit]" header in monospace. Large emoji. Stats in a bordered table (Type, Class, Habitat, Threat Level). Lore paragraph in italic. "Known Weaknesses" and "Special Abilities" as bullet lists. Footer with "Filed by:" attribution.
+
+        FORMAT 9 — "Quiz/test/trivia/flashcard" → INTERACTIVE QUIZ:
+          "QUESTION 1 OF 3" counter. Question in large text. 3-4 answer buttons (only ONE correct). Clicking wrong = button turns red + shake animation. Clicking right = button turns green + reveals next question. Score counter at top. Use JS state variable to track.
+
+        FORMAT 10 — "Timeline/history/evolution" → VERTICAL TIMELINE:
+          Vertical line (2px wide, centered). Dated entries alternate left/right with dots on the line. Each entry: year/date in bold + event description. Use position:relative with left/right offset. Totally linear, no cards.
+
+        FORMAT 11 — "Recipe/ingredients/how it's made" → RECIPE CARD:
+          Emoji visual top. "Ingredients" section with checkmark bullets. "Method" section with numbered steps. "Yield/Serves" badge. "Chef's Note" in italic footer. Kitchen-card aesthetic.
+
+        FORMAT 12 — "Mood/vibe/aesthetic/palette" → COLOR PALETTE:
+          4-6 large color swatches (height:60px;border-radius:12px) with hex codes below each. Mood descriptor words in large scattered text. "Aesthetic Profile" section with vibe keywords. NO stat bars. Visual and artsy.
+
+        FORMAT 13 — "Rank/tier/tier list" → TIER LIST:
+          Rows labeled S/A/B/C/D/F with colored backgrounds (S=gold, A=green, B=blue, C=yellow, D=orange, F=red). Items placed in appropriate tier with emoji + name. Brief justification per tier. Horizontal layout per row.
+
+        FORMAT 14 — "Simulate/physics/demo" → INTERACTIVE DEMO:
+          Clickable elements that change state. Use CSS transitions/animations. Counter or progress indicator. "Click to [action]" button that triggers visible state change. Example: toggle switches, counters, color cycling, expanding/collapsing sections with animation.
+
+        FORMAT 15 — "Poem/haiku/creative writing" → FORMATTED POEM:
+          Centered text. Large line height (2.0). Decorative top/bottom borders (unicode: ═══). Author attribution in small italic. If haiku: 3 lines with seasonal reference. If poem: stanzas separated by spacing. NO cards, NO stat bars. Pure typography.
+
+        FORMAT 16 — "Roast/review/critique" → REVIEW CARD:
+          Star rating (★★★★☆) in large yellow text. One-line verdict in bold. "THE GOOD" section (green left border). "THE BAD" section (red left border). "FINAL WORD" quote in italic. Witty, opinionated tone. Score badge in corner.
+
+        FORMAT 17 — "Blueprint/diagram/schematic" → TECHNICAL BLUEPRINT:
+          Dark blue/gray background. Component boxes with dashed borders connected by lines. Labels in monospace. Measurements and annotations. "BLUEPRINT" watermark in faint large text. Grid aesthetic.
+
+        FORMAT 18 — "Match/versus/battle" → VS BATTLE:
+          Two columns side-by-side. Left: emoji + name + stats. Center: large "VS" text with glow. Right: emoji + name + stats. Stat comparison rows with colored bars showing who wins each. "WINNER:" declaration in bold at bottom with emoji trophy.
+
+        FORMAT 19 — Anything else → SURPRISE FORMAT. Invent a layout the user hasn't seen. Be creative with CSS. Maybe a dashboard, a newspaper clipping, a wanted poster, a certificate, a postcard, a museum placard. Make it delightful.
 
         CRITICAL RULES — violating these creates broken UI:
         1. Every button you create MUST have a working onclick handler. Never mention buttons, keys, or controls that don't exist in your HTML.
