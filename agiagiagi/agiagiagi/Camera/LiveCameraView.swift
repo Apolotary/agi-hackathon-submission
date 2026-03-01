@@ -263,8 +263,7 @@ struct LiveCameraView: View {
             }
 
             // Layer 4a: World object labels in companion mode (tappable → feeds into conversation)
-            // Hide when chat messages are visible to avoid overlap
-            if !crowdNotesMode && !showArtifact && !crowdNotes.isEmpty && runtimeState != .paused && messages.isEmpty {
+            if !crowdNotesMode && !showArtifact && !crowdNotes.isEmpty && runtimeState != .paused {
                 worldObjectLabels
             }
 
@@ -2491,12 +2490,14 @@ struct LiveCameraView: View {
         GeometryReader { proxy in
             ZStack {
                 ForEach(crowdNotes.filter { !$0.hidden }) { note in
-                    let x = note.bbox.centerX * proxy.size.width
+                    // Clamp X to avoid overlapping left orb or right controls
+                    let rawX = note.bbox.centerX * proxy.size.width
+                    let x = min(max(60, rawX), proxy.size.width - 60)
                     // Place label just above the bbox center, clamped to safe zone
-                    // Top: below status bar + top controls (~60pt)
-                    // Bottom: above chat bubbles + chips + input + tab bar (~280pt from bottom)
-                    let topSafe: CGFloat = 60
-                    let bottomSafe = proxy.size.height * 0.58
+                    // Top: below status bar + top controls
+                    // Bottom: upper half only — never enter the chat/chip zone
+                    let topSafe: CGFloat = 70
+                    let bottomSafe = proxy.size.height * 0.48
                     let rawY = note.bbox.y * proxy.size.height - 8
                     let y = min(max(topSafe, rawY), bottomSafe)
 
