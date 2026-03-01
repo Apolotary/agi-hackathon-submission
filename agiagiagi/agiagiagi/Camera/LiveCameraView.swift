@@ -2486,45 +2486,73 @@ struct LiveCameraView: View {
 
     /// Subtle tappable labels anchored to detected objects in the camera feed.
     /// Tapping one injects it into the conversation.
+    /// Resolve label positions so they don't overlap each other or UI controls.
+    private func resolvedLabelPositions(notes: [CrowdNote], in size: CGSize) -> [(id: UUID, x: CGFloat, y: CGFloat)] {
+        let topSafe: CGFloat = 70
+        let bottomSafe = size.height * 0.48
+        let labelHeight: CGFloat = 24
+        let labelMinSpacing: CGFloat = 4
+        let slotHeight = labelHeight + labelMinSpacing
+
+        // Build initial positions
+        var positions: [(id: UUID, x: CGFloat, y: CGFloat)] = notes.map { note in
+            let rawX = note.bbox.centerX * size.width
+            let x = min(max(60, rawX), size.width - 60)
+            let rawY = note.bbox.y * size.height - 8
+            let y = min(max(topSafe, rawY), bottomSafe)
+            return (id: note.id, x: x, y: y)
+        }
+
+        // Sort by Y so we process top-to-bottom
+        positions.sort { $0.y < $1.y }
+
+        // Push overlapping labels apart vertically
+        for i in 1..<positions.count {
+            let prev = positions[i - 1]
+            let curr = positions[i]
+            // Check if labels are close enough horizontally to potentially overlap
+            let horizontalOverlap = abs(curr.x - prev.x) < 120
+            if horizontalOverlap && (curr.y - prev.y) < slotHeight {
+                positions[i].y = min(prev.y + slotHeight, bottomSafe)
+            }
+        }
+
+        return positions
+    }
+
     private var worldObjectLabels: some View {
         GeometryReader { proxy in
-            ZStack {
-                ForEach(crowdNotes.filter { !$0.hidden }) { note in
-                    // Clamp X to avoid overlapping left orb or right controls
-                    let rawX = note.bbox.centerX * proxy.size.width
-                    let x = min(max(60, rawX), proxy.size.width - 60)
-                    // Place label just above the bbox center, clamped to safe zone
-                    // Top: below status bar + top controls
-                    // Bottom: upper half only — never enter the chat/chip zone
-                    let topSafe: CGFloat = 70
-                    let bottomSafe = proxy.size.height * 0.48
-                    let rawY = note.bbox.y * proxy.size.height - 8
-                    let y = min(max(topSafe, rawY), bottomSafe)
+            let visibleNotes = crowdNotes.filter { !$0.hidden }
+            let positions = resolvedLabelPositions(notes: visibleNotes, in: proxy.size)
 
-                    Button {
-                        injectObjectIntoConversation(note)
-                    } label: {
-                        Text(note.label)
-                            .font(.caption2)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.white.opacity(0.85))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(
-                                Capsule()
-                                    .fill(.black.opacity(0.35))
-                                    .background(
-                                        Capsule()
-                                            .fill(.ultraThinMaterial.opacity(0.4))
-                                    )
-                            )
-                            .overlay(
-                                Capsule()
-                                    .stroke(.white.opacity(0.15), lineWidth: 0.5)
-                            )
+            ZStack {
+                ForEach(visibleNotes) { note in
+                    if let pos = positions.first(where: { $0.id == note.id }) {
+                        Button {
+                            injectObjectIntoConversation(note)
+                        } label: {
+                            Text(note.label)
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.white.opacity(0.85))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule()
+                                        .fill(.black.opacity(0.35))
+                                        .background(
+                                            Capsule()
+                                                .fill(.ultraThinMaterial.opacity(0.4))
+                                        )
+                                )
+                                .overlay(
+                                    Capsule()
+                                        .stroke(.white.opacity(0.15), lineWidth: 0.5)
+                                )
+                        }
+                        .position(x: pos.x, y: pos.y)
+                        .transition(.opacity.combined(with: .scale(scale: 0.8)))
                     }
-                    .position(x: x, y: y)
-                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
                 }
             }
         }
