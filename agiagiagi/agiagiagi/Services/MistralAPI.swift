@@ -456,6 +456,42 @@ class MistralAPI: ObservableObject {
         return parts.joined(separator: " ")
     }
 
+    /// Pick 4 random artifact formats to spotlight in chip suggestions, excluding recently used ones.
+    private static func spotlightFormatsPrompt(excluding recent: [String]) -> String {
+        let allFormats: [(key: String, example: String)] = [
+            ("COLLECTIBLE CARD", "Mint this object's soul card"),
+            ("DIALOGUE", "Interrogate the object"),
+            ("VISUAL MAP", "Map the layout or wear pattern"),
+            ("SPEC SHEET", "ID and run the specs"),
+            ("NARRATIVE", "Write its autobiography"),
+            ("COMPARISON", "Score and rate this"),
+            ("TIMELINE", "Build its history"),
+            ("BESTIARY ENTRY", "Add to the bestiary log"),
+            ("QUIZ", "Quiz me on this"),
+            ("MOOD PALETTE", "Extract the vibe palette"),
+            ("REVIEW/ROAST", "Roast and review this"),
+            ("TIER LIST", "Tier rank: S-tier or trash?"),
+            ("BLUEPRINT", "Blueprint the internals"),
+            ("VS BATTLE", "Battle: this vs its rival"),
+            ("SIMULATION", "Simulate how this works"),
+            ("POEM/HAIKU", "Compose a haiku about this"),
+            ("RECIPE", "Show the recipe or ingredients"),
+            ("STEP-BY-STEP GUIDE", "Explain step by step"),
+        ]
+        let recentLower = Set(recent.map { $0.lowercased() })
+        let available = allFormats.filter { !recentLower.contains($0.key.lowercased()) }
+        let pool = available.isEmpty ? allFormats : available
+        let picked = Array(pool.shuffled().prefix(4))
+        let lines = picked.enumerated().map { i, f in
+            "  SPOTLIGHT \(i + 1): \(f.key) — e.g. \"\(f.example)\""
+        }
+        return """
+        THIS TIME, you MUST include at least one chip from each of these spotlighted formats:
+        \(lines.joined(separator: "\n"))
+        Make each chip specific to the ACTUAL object you see. These are your priority picks — fill remaining chips from other formats.
+        """
+    }
+
     /// Capture short user-intent memory from recent goals.
     private static func recentGoalsBlurb(limit: Int = 6) -> String {
         let goals = InteractionStore.shared.interactions
@@ -632,9 +668,9 @@ class MistralAPI: ObservableObject {
                Good: "This is a Daikin AC remote, model ARC478A71. Current setting: 24°C cooling mode."
                Good: "Japanese food menu. Main items range from ¥800-1200. The daily special is highlighted in red."
             3. Write a short scene_description (max 8 words).
-            4. Provide 2-4 practical chips (max 6 words each). Chips are things I (the AI) can GENERATE: spec sheets, translations, how-to guides, comparison charts, identification cards.
-               Make chips SPECIFIC to what you see — name the actual object or text.
-               GOOD: "Translate this kanji label", "Show Daikin AC specs", "Explain the red warning"
+            4. Provide 4-6 practical chips (max 6 words each). Chips are things I (the AI) can GENERATE: spec sheets, translations, how-to guides, comparison charts, identification cards, recipes, step-by-step guides, quizzes, blueprints.
+               Make chips SPECIFIC to what you see — name the actual object or text. Each chip should suggest a DIFFERENT format.
+               GOOD: "Translate this kanji label", "Show Daikin AC specs", "Explain the red warning", "Blueprint the internals", "Quiz me on this"
                BAD (generic): "Show specs", "Translate text" — too vague. BAD (physical): "Press that button"
             5. Rate quality_confidence (0.0-1.0): how well you understand this scene.
             6. Rate safety_confidence (0.0-1.0): how safe to interact. 1.0 = passive, 0.3 = dangerous equipment.
@@ -691,27 +727,17 @@ class MistralAPI: ObservableObject {
                Good: "That keyboard has seen things. The shine on WASD tells a story the owner won't."
                Good: "A thermostat from another era. The dial is set to 22 — someone here knows exactly what they want."
             3. Write a short scene_description (max 8 words).
-            4. Provide 2-4 smart reply chips (max 6 words each). CRITICAL: chips are things I (the AI) can GENERATE as interactive content. I am a generative UI engine that builds interactive HTML artifacts — every chip should make the user curious what I'll build.
+            4. Provide 4-6 smart reply chips (max 6 words each). CRITICAL: chips are things I (the AI) can GENERATE as interactive content. I am a generative UI engine that builds interactive HTML artifacts — every chip should make the user curious what I'll build.
                EVERY chip must be UNIQUE and SPECIFIC to this exact scene. Never repeat generic chips across scenes.
                BAD (generic, repetitive): "Talk to this object", "Narrate its story", "Show specs chart" — these are boring defaults.
                BAD (physical actions): "Clean the desk", "Press that button" — I can't do physical actions.
-               Each chip should hint at a DIFFERENT artifact format. Mix from these categories:
-               - COLLECTIBLE CARDS: "Mint this keyboard's card", "Collect the mug's soul card" — generates a trading-card-style artifact with stats, rarity, flavor text, and visual flair
-               - DIALOGUES: "Interrogate the spacebar", "Interview the dial" — inner-voice conversation with the object
-               - VISUAL MAPS: "Map the wear pattern", "Chart the cable topology" — CSS-drawn diagrams, heatmaps, spatial layouts
-               - SPEC SHEETS: "ID this switch type", "Run the specs" — clean technical breakdown
-               - NARRATIVES: "Write its autobiography", "Tell its origin story" — literary card with evocative prose
-               - COMPARISONS: "Rate this setup", "Score the ergonomics" — rating bars, scored breakdowns
-               - TIMELINES: "Build its history", "Trace the patina" — chronological story
-               - LORE ENTRIES: "Add to the bestiary", "Log this creature" — RPG-style encyclopedia entry
-               - QUIZZES: "Quiz me on this", "Flashcard challenge" — interactive trivia or flashcard about the object
-               - MOOD/PALETTE: "Extract the vibe palette", "Read the aesthetic" — color swatches, mood analysis
-               - REVIEWS: "Roast this setup", "Rate and review" — honest review with star ratings, pros/cons, verdict
-               - TIER LISTS: "Tier rank this", "S-tier or trash?" — tier placement with justification
-               - BLUEPRINTS: "Diagram the internals", "Blueprint this" — technical schematic with labeled components
-               - VS BATTLES: "Battle: this vs that", "Head-to-head matchup" — dramatic side-by-side comparison with winner
-               - SIMULATIONS: "Simulate the physics", "Demo this mechanism" — mini interactive demo with CSS animations
-               - POEMS: "Write a haiku about this", "Compose an ode" — formatted literary piece inspired by the object
+               Each chip MUST hint at a DIFFERENT artifact format. You have 20 formats available — USE THE FULL RANGE. Do NOT cluster around cards/dialogues/specs.
+
+               \(Self.spotlightFormatsPrompt(excluding: recentArtifactFormats))
+
+               Other available formats (pick from these too!):
+               COLLECTIBLE CARDS, DIALOGUES, VISUAL MAPS, SPEC SHEETS, NARRATIVES, COMPARISONS, TIMELINES, LORE ENTRIES, QUIZZES, MOOD/PALETTE, REVIEWS, TIER LISTS, BLUEPRINTS, VS BATTLES, SIMULATIONS, POEMS, RECIPES, STEP-BY-STEP GUIDES, TRANSLATIONS, DEEP DIVES.
+
                \(recentArtifactFormats.isEmpty ? "" : "VARIETY RULE: The user has ALREADY generated these artifact formats this session: [\(recentArtifactFormats.joined(separator: ", "))]. Do NOT suggest these same formats again. Pick from the categories they HAVEN'T tried yet. The goal is to show the full range of what I can build.")
                Name the ACTUAL object you see. Reference SPECIFIC details. Make each chip feel like a unique action only possible for THIS scene.
                If you see text in a non-English language, include a translation chip.
@@ -754,7 +780,7 @@ class MistralAPI: ObservableObject {
                 messages: messages,
                 responseFormat: responseFormat,
                 temperature: 0.4,
-                maxTokens: 450,
+                maxTokens: 550,
                 reasoningEffort: "minimal"
             )
             print("[MistralAPI] companionObserve: shouldSpeak=\(result.shouldSpeak), scene=\(result.sceneDescription.prefix(40))")
@@ -2193,7 +2219,7 @@ class MistralAPI: ObservableObject {
             ]),
             "chips": .object([
                 "type": .string("array"),
-                "description": .string("2-4 smart reply chips, each max 6 words"),
+                "description": .string("4-6 smart reply chips, each max 6 words, each a DIFFERENT artifact format"),
                 "items": .object(["type": .string("string")])
             ]),
             "quality_confidence": .object([
