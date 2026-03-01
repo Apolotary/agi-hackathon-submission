@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Action Wizard</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+    body {
+        background: linear-gradient(180deg, #f2f4f8 0%, #e8ecf2 100%);
+        color: #1c1c1e;
+        min-height: 100vh;
+        padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+    }
+
+    .wizard-container {
+        padding: 20px 16px;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    /* --- Header --- */
+    .wizard-header {
+        margin-bottom: 24px;
+        animation: slideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .wizard-header__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+
+    .wizard-header__goal {
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #1c1c1e;
+    }
+
+    .wizard-header__subtitle {
+        font-size: 0.85rem;
+        color: #8e8e93;
+        font-weight: 400;
+    }
+
+    /* --- Progress Bar --- */
+    .wizard-progress {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 24px;
+        animation: slideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
+        opacity: 0;
+    }
+
+    .wizard-progress__segment {
+        flex: 1;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(0, 0, 0, 0.08);
+        transition: background 0.4s ease;
+    }
+
+    .wizard-progress__segment--done {
+        background: linear-gradient(90deg, #34c759, #30d158);
+    }
+
+    .wizard-progress__segment--active {
+        background: linear-gradient(90deg, #007aff, #3898ff);
+        animation: shimmer 2s ease-in-out infinite;
+        background-size: 200% 100%;
+    }
+
+    /* --- Step Card --- */
+    .step-card {
+        display: flex;
+        gap: 14px;
+        padding: 16px;
+        background: #fff;
+        border-radius: 16px;
+        margin-bottom: 12px;
+        box-shadow:
+            0 1px 3px rgba(0, 0, 0, 0.05),
+            0 4px 14px rgba(0, 0, 0, 0.03);
+        border: 1px solid rgba(0, 0, 0, 0.03);
+        opacity: 0;
+        animation: cardAppear 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        transition: border-color 0.3s ease;
+    }
+
+    .step-card--confirmed {
+        border-color: rgba(52, 199, 89, 0.25);
+        background: linear-gradient(135deg, #fff, #f0faf3);
+    }
+
+    .step-card__body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .step-card__instruction {
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.45;
+        color: #1c1c1e;
+        margin-bottom: 4px;
+    }
+
+    .step-card__target {
+        font-size: 0.78rem;
+        color: #8e8e93;
+        margin-bottom: 8px;
+        font-weight: 400;
+    }
+
+    .step-card__target span {
+        background: rgba(0, 0, 0, 0.04);
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-family: 'SF Mono', SFMono-Regular, monospace;
+        font-size: 0.75rem;
+    }
+
+    .step-card__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+
+    .step-card__confidence-label {
+        font-size: 0.72rem;
+        color: #8e8e93;
+        font-weight: 500;
+    }
+
+    /* --- Section Divider --- */
+    .section-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #8e8e93;
+        margin: 24px 0 12px 4px;
+    }
+
+    /* --- Done Button --- */
+    .done-section {
+        margin-top: 28px;
+        text-align: center;
+        opacity: 0;
+        animation: slideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .done-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 40px;
+        border: none;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #007aff, #0055d4);
+        color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 14px rgba(0, 122, 255, 0.3);
+    }
+
+    .done-btn:active {
+        transform: scale(0.96);
+        box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+    }
+
+    .done-btn:disabled {
+        background: linear-gradient(135deg, #c7c7cc, #aeaeb2);
+        box-shadow: none;
+        cursor: default;
+    }
+
+    /* --- Empty State --- */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        color: #8e8e93;
+        text-align: center;
+        gap: 12px;
+    }
+
+    .empty-state__icon {
+        font-size: 3rem;
+        opacity: 0.4;
+        margin-bottom: 4px;
+    }
+</style>
+</head>
+<body>
+
+<div id="wizard-root" class="wizard-container">
+    <div class="empty-state">
+        <div class="empty-state__icon">&#9881;</div>
+        <h2>Action Wizard</h2>
+        <p class="caption">Waiting for panel analysis...</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    var root = document.getElementById('wizard-root');
+    var confirmedSteps = {};
+    var wizardData = null;
+
+    function formatGoal(goal) {
+        return goal.replace(/_/g, ' ').replace(/\b\w/g, function(c) {
+            return c.toUpperCase();
+        });
+    }
+
+    function riskClass(tier) {
+        if (tier === 'high') return 'risk-badge--high';
+        if (tier === 'medium') return 'risk-badge--medium';
+        return 'risk-badge--low';
+    }
+
+    function confidenceClass(value) {
+        if (value >= 0.8) return 'confidence-bar__fill--high';
+        if (value >= 0.6) return 'confidence-bar__fill--medium';
+        return 'confidence-bar__fill--low';
+    }
+
+    function confidencePercent(value) {
+        return Math.round(value * 100) + '%';
+    }
+
+    function buildHeader(data) {
+        var html = '<div class="wizard-header">';
+        html += '<div class="wizard-header__top">';
+        html += '<h1 class="wizard-header__goal">' + escapeHtml(formatGoal(data.goal)) + '</h1>';
+        html += '<span class="risk-badge ' + riskClass(data.riskTier) + '">';
+        html += '<span class="risk-badge__dot"></span>';
+        html += escapeHtml(data.riskTier) + ' risk';
+        html += '</span>';
+        html += '</div>';
+        if (data.steps && data.steps.length > 0) {
+            html += '<p class="wizard-header__subtitle">' + data.steps.length + ' step' + (data.steps.length === 1 ? '' : 's') + ' to complete</p>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function buildProgress(data) {
+        if (!data.steps || data.steps.length === 0) return '';
+        var html = '<div class="wizard-progress">';
+        for (var i = 0; i < data.steps.length; i++) {
+            var stepId = data.steps[i].stepId || ('step_' + i);
+            var cls = 'wizard-progress__segment';
+            if (confirmedSteps[stepId]) {
+                cls += ' wizard-progress__segment--done';
+            }
+            html += '<div class="' + cls + '"></div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function buildSteps(data) {
+        if (!data.steps || data.steps.length === 0) return '';
+        var html = '<div class="section-label">Steps</div>';
+
+        for (var i = 0; i < data.steps.length; i++) {
+            var step = data.steps[i];
+            var stepId = step.stepId || ('step_' + i);
+            var isConfirmed = !!confirmedSteps[stepId];
+            var delay = (0.2 + i * 0.08);
+            var needsConfirm = step.requiresConfirmation || (data.requiresConfirmation && data.riskTier === 'high');
+
+            html += '<div class="step-card' + (isConfirmed ? ' step-card--confirmed' : '') + '" style="animation-delay: ' + delay + 's" data-step-id="' + escapeHtml(stepId) + '">';
+
+            // Number circle
+            html += '<div class="step-number' + (isConfirmed ? ' step-number--confirmed' : '') + '">';
+            if (isConfirmed) {
+                html += '&#10003;';
+            } else {
+                html += (i + 1);
+            }
+            html += '</div>';
+
+            html += '<div class="step-card__body">';
+
+            // Instruction
+            html += '<div class="step-card__instruction">' + escapeHtml(step.instruction || step.text || '') + '</div>';
+
+            // Target element
+            if (step.targetElement || step.target) {
+                html += '<div class="step-card__target">Target: <span>' + escapeHtml(step.targetElement || step.target) + '</span></div>';
+            }
+
+            // Confirm button (if needed)
+            if (needsConfirm) {
+                html += '<div class="step-card__footer">';
+                if (isConfirmed) {
+                    html += '<button class="confirm-btn confirm-btn--done" disabled>';
+                    html += '<span style="animation: checkPop 0.3s ease;">&#10003;</span> Confirmed';
+                    html += '</button>';
+                } else {
+                    html += '<button class="confirm-btn" onclick="confirmStep(\'' + escapeHtml(stepId) + '\')">';
+                    html += '&#9679; Confirm this step';
+                    html += '</button>';
+                }
+                html += '</div>';
+            }
+
+            // Confidence bar
+            if (typeof step.confidence === 'number') {
+                html += '<div style="margin-top: 10px;">';
+                html += '<div class="step-card__confidence-label">Confidence: ' + confidencePercent(step.confidence) + '</div>';
+                html += '<div class="confidence-bar">';
+                html += '<div class="confidence-bar__fill ' + confidenceClass(step.confidence) + '" style="width: ' + confidencePercent(step.confidence) + '"></div>';
+                html += '</div>';
+                html += '</div>';
+            }
+
+            html += '</div>'; // body
+            html += '</div>'; // card
+        }
+
+        return html;
+    }
+
+    function buildFallbacks(data) {
+        if (!data.fallbacks || data.fallbacks.length === 0) return '';
+        var html = '<div class="section-label">Fallbacks</div>';
+        for (var i = 0; i < data.fallbacks.length; i++) {
+            var fb = data.fallbacks[i];
+            html += '<div class="fallback-box">';
+            html += '<div class="fallback-box__header">';
+            html += '&#9888; Low confidence';
+            html += '</div>';
+            html += '<div class="fallback-box__text">' + escapeHtml(fb.suggestion || fb.text || fb) + '</div>';
+            html += '</div>';
+        }
+        return html;
+    }
+
+    function buildDoneSection(data) {
+        if (!data.steps || data.steps.length === 0) return '';
+        var allConfirmed = true;
+        var needsAnyConfirm = false;
+        for (var i = 0; i < data.steps.length; i++) {
+            var step = data.steps[i];
+            var stepId = step.stepId || ('step_' + i);
+            var needsConfirm = step.requiresConfirmation || (data.requiresConfirmation && data.riskTier === 'high');
+            if (needsConfirm) {
+                needsAnyConfirm = true;
+                if (!confirmedSteps[stepId]) {
+                    allConfirmed = false;
+                }
+            }
+        }
+
+        var disabled = needsAnyConfirm && !allConfirmed;
+        var delay = (0.2 + data.steps.length * 0.08 + 0.15);
+        var html = '<div class="done-section" style="animation-delay: ' + delay + 's">';
+        html += '<button class="done-btn" ' + (disabled ? 'disabled' : '') + ' onclick="wizardDone()">';
+        html += disabled ? 'Confirm all steps first' : 'Done &#10003;';
+        html += '</button>';
+        html += '</div>';
+        return html;
+    }
+
+    function render() {
+        if (!wizardData) return;
+        var html = '';
+        html += buildHeader(wizardData);
+        html += buildProgress(wizardData);
+        html += buildSteps(wizardData);
+        html += buildFallbacks(wizardData);
+        html += buildDoneSection(wizardData);
+        root.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+        if (typeof str !== 'string') return '';
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function postToSwift(payload) {
+        try {
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.wizard) {
+                window.webkit.messageHandlers.wizard.postMessage(JSON.stringify(payload));
+            }
+        } catch (e) {
+            console.log('Swift bridge not available:', e);
+        }
+    }
+
+    // --- Public API ---
+
+    window.updateWizard = function(jsonString) {
+        try {
+            wizardData = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+            confirmedSteps = {};
+            render();
+        } catch (e) {
+            console.error('updateWizard parse error:', e);
+        }
+    };
+
+    window.confirmStep = function(stepId) {
+        confirmedSteps[stepId] = true;
+        postToSwift({ action: 'confirm', stepId: stepId });
+        render();
+    };
+
+    window.wizardDone = function() {
+        postToSwift({ action: 'done' });
+    };
+})();
+</script>
+
+</body>
+</html>
