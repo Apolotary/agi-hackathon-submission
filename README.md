@@ -100,7 +100,11 @@ Native iOS (Swift/SwiftUI, iOS 26.2)
 │   ├── Perceptual hash scene gating (8×8 grayscale → similarity threshold)
 │   ├── Proactive policy engine (rate limiting, safety gating)
 │   └── Scene session memory + conversation history management
-├── Generative UI Formats — 17+ artifact types from a single prompt engine
+├── Adaptive UI
+│   ├── Proportional layouts (GeometryReader, no hardcoded pixels)
+│   ├── Collision-avoiding object labels (greedy algorithm, safe zone clamping)
+│   └── Responsive across all iPhone sizes (SE to Pro Max)
+├── Generative UI Formats — 20 artifact types, each with a distinct visual template
 │   ├── Collectible trading cards (rarity, stat bars, emoji visuals, flavor text)
 │   ├── Inner-voice dialogues (branching conversation trees, 2-3 levels deep)
 │   ├── Visual maps and CSS diagrams (spatial layouts, heatmaps)
@@ -117,7 +121,8 @@ Native iOS (Swift/SwiftUI, iOS 26.2)
 │   ├── Mini simulations (CSS animations, click-driven demos)
 │   ├── Poems and haiku (formatted literary pieces)
 │   ├── Recipes and ingredient breakdowns
-│   └── Step-by-step visual guides
+│   ├── Step-by-step visual guides
+│   └── Spotlight rotation — 4 random formats highlighted per cycle for variety
 ├── Dedicated Flows
 │   ├── OCR Extraction — structured text reading with per-region translation
 │   ├── Deep Dive — mistral-large + web_search tool for evidence-backed research
@@ -174,7 +179,7 @@ Configure in the app's Settings tab:
 
 - **Zero backend** — all API calls direct from device via URLSession
 - **8+ structured JSON schemas** with strict mode for every Mistral call
-- **Generative UI** — the AI writes entire HTML artifacts including interactive JS; 17+ formats (collectible cards, dialogues, maps, specs, narratives, comparisons, timelines, bestiary entries, quizzes, mood palettes, reviews, tier lists, blueprints, VS battles, simulations, poems, recipes)
+- **Generative UI** — the AI writes entire HTML artifacts including interactive JS; 20 formats with distinct visual templates (collectible cards, dialogues, maps, specs, narratives, comparisons, timelines, bestiary entries, quizzes, mood palettes, reviews, tier lists, blueprints, VS battles, simulations, poems, recipes, guides)
 - **Collectible card system** — each object becomes a trading card with rarity, stat bars, emoji visual, and flavor text
 - **Mistral web_search tool** — Deep Dive uses tool calling for evidence-backed research
 - **Artifact safety gate** — validates generated HTML before rendering, blocks dangerous patterns
@@ -189,6 +194,8 @@ Configure in the app's Settings tab:
 - **Demo mode** with pre-baked responses guarantees smooth stage demo without network
 - **Self-improving agent swarm** — agents evaluate each other, optimize prompts, build knowledge
 - **Artifact catalog + saved skills** — 20 browsable artifact formats in a dedicated modal; any artifact can be bookmarked and recalled; recalling on a new object re-generates contextually
+- **Adaptive UI** — proportional layouts adapt across all iPhone sizes with no hardcoded pixel dimensions
+- **Format spotlight rotation** — each observation highlights 4 random artifact formats as chips for high variety
 
 ## Hackathon Context
 
@@ -196,7 +203,7 @@ Configure in the app's Settings tab:
 - **Track:** API (Bektur's AGI team)
 - **Target device:** iPhone Air
 - **Prize targets:** ElevenLabs Best Voice, Mistral Best Vibe Coder, HuggingFace Best Agent Skills
-- **Judging:** Technicity / Creativity / Usefulness / Demo Quality / Track Alignment (20% each)
+- **Judging:** Technicality / Creativity / Usefulness / Demo / Alignment with track (20% each)
 
 ## License
 
